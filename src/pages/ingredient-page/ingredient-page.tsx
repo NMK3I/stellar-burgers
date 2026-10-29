@@ -1,15 +1,12 @@
 import { IngredientDetails } from '@/components';
 
+import styles from '../../components/app/app.module.css';
+
 export const IngredientPage = (): React.JSX.Element => (
-  <main
-    style={{
-      display: 'flex',
-      flexDirection: 'column',
-      alignItems: 'center',
-      marginTop: '80px',
-    }}
-  >
-    <h1 className="text text_type_main-large">Детали ингредиента</h1>
+  <main className={styles.detailPageWrap}>
+    <h1 className={`text text_type_main-large ${styles.detailHeader}`}>
+      Детали ингредиента
+    </h1>
     <IngredientDetails />
   </main>
 );

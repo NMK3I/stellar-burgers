@@ -22,6 +22,7 @@ import {
   Route,
   useNavigate,
   useLocation,
+  useMatch,
   type Location,
 } from 'react-router-dom';
 
@@ -94,10 +95,10 @@ const RouteComponent = (): React.JSX.Element => {
 
   const background = (location.state as { background?: Location })?.background;
 
-  const isOrderRoute =
-    location.pathname.startsWith('/feed/') ||
-    location.pathname.startsWith('/profile/orders/');
-  const orderNumberTitle = isOrderRoute ? `#${location.pathname.split('/').pop()}` : '';
+  const feedNumber = useMatch('/feed/:number')?.params.number;
+  const profileOrderNumber = useMatch('/profile/orders/:number')?.params.number;
+  const orderNumber = feedNumber ?? profileOrderNumber;
+  const orderNumberTitle = orderNumber ? `#${orderNumber}` : '';
 
   return (
     <>

@@ -5,8 +5,9 @@ import {
   registerUserApi,
   updateUserApi,
   type TLoginData,
+  type TRegisterData,
 } from '@/utils/burger-api';
-import { setCookie, deleteCookie } from '@/utils/cookie';
+import { setCookie, deleteCookie, getCookie } from '@/utils/cookie';
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 
 import type { TUser } from '@/utils/types';
@@ -15,6 +16,7 @@ type TAuthState = {
   user: TUser | null;
   isAuthenticated: boolean;
   isLoading: boolean;
+  isAuthChecked: boolean;
   error: string | null;
 };
 
@@ -22,6 +24,7 @@ const initialState: TAuthState = {
   user: null,
   isAuthenticated: false,
   isLoading: false,
+  isAuthChecked: false,
   error: null,
 };
 
@@ -42,11 +45,7 @@ export const loginUser = createAsyncThunk<TUser, TLoginData, { rejectValue: stri
 
 export const registerUser = createAsyncThunk<
   TUser,
-  {
-    email: string;
-    password: string;
-    name: string;
-  },
+  TRegisterData,
   { rejectValue: string }
 >('auth/register', async (data, { rejectWithValue }) => {
   try {
@@ -62,11 +61,7 @@ export const registerUser = createAsyncThunk<
 
 export const updateUser = createAsyncThunk<
   TUser,
-  {
-    name?: string;
-    email?: string;
-    password?: string;
-  },
+  Partial<TRegisterData>,
   { rejectValue: string }
 >('auth/updateUser', async (data, { rejectWithValue }) => {
   try {
@@ -81,6 +76,12 @@ export const checkUserAuth = createAsyncThunk<TUser, void, { rejectValue: string
   'auth/check',
   async (_, { rejectWithValue }) => {
     try {
+      const accessToken = getCookie('accessToken');
+
+      if (!accessToken) {
+        return rejectWithValue('Токен отсутствует');
+      }
+
       const response = await getUserApi();
 
       return response.user;
@@ -93,11 +94,9 @@ export const checkUserAuth = createAsyncThunk<TUser, void, { rejectValue: string
 export const logoutUser = createAsyncThunk('auth/logout', async (_, { dispatch }) => {
   try {
     await logoutApi();
-    localStorage.removeItem('refreshToken');
-    deleteCookie('accessToken');
-    dispatch(clearAuth());
   } catch (error) {
     console.error('Ошибка при выходе:', error);
+  } finally {
     localStorage.removeItem('refreshToken');
     deleteCookie('accessToken');
     dispatch(clearAuth());
@@ -111,6 +110,9 @@ const authSlice = createSlice({
     clearAuth: (state) => {
       state.user = null;
       state.isAuthenticated = false;
+    },
+    clearError: (state) => {
+      state.error = null;
     },
   },
   extraReducers: (builder) => {
@@ -158,16 +160,18 @@ const authSlice = createSlice({
       })
       .addCase(checkUserAuth.fulfilled, (state, action) => {
         state.isLoading = false;
+        state.isAuthChecked = true;
         state.isAuthenticated = true;
         state.user = action.payload;
       })
       .addCase(checkUserAuth.rejected, (state) => {
         state.isLoading = false;
+        state.isAuthChecked = true;
         state.isAuthenticated = false;
         state.user = null;
       });
   },
 });
 
-export const { clearAuth } = authSlice.actions;
+export const { clearAuth, clearError } = authSlice.actions;
 export default authSlice.reducer;

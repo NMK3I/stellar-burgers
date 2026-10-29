@@ -1,19 +1,22 @@
 import { getOrdersApi } from '@/utils/burger-api';
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 
+import { clearAuth } from './authSlice';
+
 import type { TOrder } from '@/utils/types';
 
-export const fetchProfileOrders = createAsyncThunk(
-  'profileOrders/fetch',
-  async (_, { rejectWithValue }) => {
-    try {
-      const response = await getOrdersApi();
-      return response;
-    } catch (error) {
-      return rejectWithValue((error as Error).message);
-    }
+export const fetchProfileOrders = createAsyncThunk<
+  TOrder[],
+  void,
+  { rejectValue: string }
+>('profileOrders/fetch', async (_, { rejectWithValue }) => {
+  try {
+    const response = await getOrdersApi();
+    return response;
+  } catch (error) {
+    return rejectWithValue((error as Error).message);
   }
-);
+});
 
 type TProfileOrdersState = {
   orders: TOrder[];
@@ -43,7 +46,10 @@ const profileOrdersSlice = createSlice({
       })
       .addCase(fetchProfileOrders.rejected, (state, action) => {
         state.isLoading = false;
-        state.error = action.payload as string;
+        state.error = action.payload ?? 'Ошибка загрузки истории';
+      })
+      .addCase(clearAuth, (state) => {
+        state.orders = [];
       });
   },
 });

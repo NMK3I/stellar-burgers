@@ -82,7 +82,7 @@ export const BurgerConstructorUI = ({
         type="primary"
         size="large"
         onClick={onOrderClick}
-        disabled={!constructorItems.bun || constructorItems.ingredients.length === 0}
+        disabled={!constructorItems.bun}
       >
         Оформить заказ
       </Button>

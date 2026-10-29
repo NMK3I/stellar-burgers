@@ -4,10 +4,10 @@ import { Navigate, Outlet, useLocation } from 'react-router-dom';
 import { Preloader } from '../ui';
 
 export const ProtectedRoute = (): React.JSX.Element => {
-  const { isAuthenticated, isLoading } = useSelector((state) => state.auth);
+  const { isAuthenticated, isAuthChecked } = useSelector((state) => state.auth);
   const location = useLocation();
 
-  if (isLoading) {
+  if (!isAuthChecked) {
     return <Preloader />;
   }
   if (!isAuthenticated) {
@@ -18,9 +18,9 @@ export const ProtectedRoute = (): React.JSX.Element => {
 };
 
 export const OnlyUnAuthRoute = (): React.JSX.Element => {
-  const { isAuthenticated, isLoading } = useSelector((state) => state.auth);
+  const { isAuthenticated, isAuthChecked } = useSelector((state) => state.auth);
 
-  if (isLoading) {
+  if (!isAuthChecked) {
     return <Preloader />;
   }
   if (isAuthenticated) {

@@ -1,38 +1,41 @@
-import { useSelector } from '@/services/store';
-import { getOrderByNumberApi } from '@/utils/burger-api';
+import { fetchOrderByNumber, clearOrderState } from '@/services/slices/feedSlice';
+import { useDispatch, useSelector } from '@/services/store';
 import { Preloader, OrderInfoUI } from '@ui';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo } from 'react';
 import { useParams } from 'react-router-dom';
 
-import type { TIngredient, TOrder } from '@utils-types';
+import type { TIngredient } from '@utils-types';
 
 export const OrderInfo = (): React.JSX.Element => {
   const { number } = useParams<{ number: string }>();
+  const dispatch = useDispatch();
 
   const ingredients = useSelector((state) => state.ingredients.items);
 
   const feedOrders = useSelector((state) => state.feed.orders);
   const profileOrders = useSelector((state) => state.profileOrders.orders);
 
+  const { currentOrder, isOrderLoading, orderError } = useSelector(
+    (state) => state.feed
+  );
+
   const orderFromStore =
     feedOrders.find((o) => o.number === Number(number)) ??
     profileOrders.find((o) => o.number === Number(number));
 
-  const [fetchedOrder, setFetchedOrder] = useState<TOrder | null>(null);
+  useEffect(() => {
+    if (!orderFromStore && number && !currentOrder && !isOrderLoading && !orderError) {
+      void dispatch(fetchOrderByNumber(Number(number)));
+    }
+  }, [orderFromStore, number, currentOrder, isOrderLoading, orderError, dispatch]);
 
   useEffect(() => {
-    if (!orderFromStore && number && !fetchedOrder) {
-      getOrderByNumberApi(Number(number))
-        .then((res) => {
-          if (res.success && res.orders.length > 0) {
-            setFetchedOrder(res.orders[0]);
-          }
-        })
-        .catch((err) => console.error('Ошибка загрузки заказа:', err));
-    }
-  }, [number, orderFromStore, fetchedOrder]);
+    return (): void => {
+      dispatch(clearOrderState());
+    };
+  }, [dispatch, number]);
 
-  const orderData = orderFromStore ?? fetchedOrder;
+  const orderData = orderFromStore ?? currentOrder;
 
   /* Готовим данные для отображения */
   const orderInfo = useMemo(() => {
@@ -73,6 +76,18 @@ export const OrderInfo = (): React.JSX.Element => {
       total,
     };
   }, [orderData, ingredients]);
+
+  if (isOrderLoading) {
+    return <Preloader />;
+  }
+
+  if (orderError) {
+    return (
+      <p className="text text_type_main-default mt-10">
+        Ошибка загрузки заказа: {orderError}
+      </p>
+    );
+  }
 
   if (!orderInfo) {
     return <Preloader />;

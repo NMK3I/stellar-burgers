@@ -1,11 +1,10 @@
 import { createSlice, type PayloadAction } from '@reduxjs/toolkit';
 
-import type { TIngredient, TConstructorIngredient } from '@/utils/types';
-
-type TConstructorState = {
-  bun: TConstructorIngredient | null;
-  ingredients: TConstructorIngredient[];
-};
+import type {
+  TIngredient,
+  TConstructorIngredient,
+  TConstructorState,
+} from '@/utils/types';
 
 const initialState: TConstructorState = {
   bun: null,

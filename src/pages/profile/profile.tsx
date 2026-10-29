@@ -1,5 +1,5 @@
 import { Preloader } from '@/components/ui';
-import { updateUser } from '@/services/slices/authSlice';
+import { updateUser, clearError } from '@/services/slices/authSlice';
 import { useDispatch, useSelector } from '@/services/store';
 import { ProfileUI } from '@ui-pages';
 import { type SyntheticEvent, useEffect, useState } from 'react';
@@ -10,34 +10,24 @@ export const Profile = (): React.JSX.Element => {
   const user = useSelector((state) => state.auth.user);
   const error = useSelector((state) => state.auth.error);
 
-  const [formValue, setFormValue] = useState({
-    name: '',
-    email: '',
+  const [formValue, setFormValue] = useState(() => ({
+    name: user?.name ?? '',
+    email: user?.email ?? '',
     password: '',
-  });
-
-  const [isInitialized, setIsInitialized] = useState(false);
+  }));
 
   useEffect(() => {
-    if (user) {
-      setFormValue({
-        name: user.name ?? '',
-        email: user.email ?? '',
-        password: '',
-      });
-      setIsInitialized(true);
-    }
-  }, [user]);
+    dispatch(clearError());
+  }, [dispatch]);
 
   if (!user) {
     return <Preloader />;
   }
 
   const isFormChanged =
-    isInitialized &&
-    (formValue.name !== (user.name ?? '') ||
-      formValue.email !== (user.email ?? '') ||
-      !!formValue.password);
+    formValue.name !== (user.name ?? '') ||
+    formValue.email !== (user.email ?? '') ||
+    !!formValue.password;
 
   const handleSubmit = (e: SyntheticEvent): void => {
     e.preventDefault();

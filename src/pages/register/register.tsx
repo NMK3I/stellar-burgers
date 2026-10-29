@@ -1,7 +1,7 @@
-import { registerUser } from '@/services/slices/authSlice';
+import { registerUser, clearError } from '@/services/slices/authSlice';
 import { useDispatch, useSelector } from '@/services/store';
 import { RegisterUI } from '@ui-pages';
-import { type SyntheticEvent, useState } from 'react';
+import { type SyntheticEvent, useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 export const Register = (): React.JSX.Element => {
@@ -13,6 +13,10 @@ export const Register = (): React.JSX.Element => {
   const navigate = useNavigate();
 
   const error = useSelector((state) => state.auth.error);
+
+  useEffect(() => {
+    dispatch(clearError());
+  }, [dispatch]);
 
   const handleSubmit = (e: SyntheticEvent): void => {
     e.preventDefault();
