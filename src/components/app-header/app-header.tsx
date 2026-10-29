@@ -1,8 +1,8 @@
+import { useSelector } from '@/services/store';
 import { AppHeaderUI } from '@ui';
 
 export const AppHeader = (): React.JSX.Element => {
-  /* TODO: Получите имя пользователя из хранилища */
-  const userName = undefined;
+  const userName = useSelector((state) => state.auth.user);
 
-  return <AppHeaderUI userName={userName} />;
+  return <AppHeaderUI userName={userName?.name} />;
 };
