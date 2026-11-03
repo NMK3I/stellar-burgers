@@ -11,6 +11,7 @@ p {
 }
 
 .content {
+  padding-block-end: 40px;
   overflow-y: scroll;
 }
 
