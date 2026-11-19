@@ -12,124 +12,122 @@ test.describe('Страница конструктора бургера', () => 
       },
     ]);
 
-    // refreshToken кладем в localStorage до загрузки страницы
+    // refreshToken кладем в localStorage до загрузки страницы, чтобы приложение сразу видело авторизацию
     await page.addInitScript(() => {
       window.localStorage.setItem('refreshToken', 'mock-refresh');
     });
 
-    // Юзаем HAR
     await page.routeFromHAR('tests/hars/api.har', {
       url: '**/api/**',
       update: false,
     });
 
-    // Переходим на страницу
     await page.goto('/');
 
-    // Делаем скрин главной страницы (закомментировал)
-    // await page.screenshot({ path: 'tests/test-screen.png' });
-
-    // Ждем загрузки ингредиентов
     await expect(page.getByRole('heading', { name: 'Соберите бургер' })).toBeVisible();
   });
 
-  test('Добавление ингредиентов в конструктор', async ({ page }) => {
-    // Находим карточку конкретной булки и кликаем добавить
-    const bunCard = page.locator('li').filter({ hasText: 'Краторная булка N-200i' });
-    await bunCard.getByRole('button', { name: 'Добавить' }).click();
+  test.describe('Добавление ингредиентов в конструктор', () => {
+    test('Должен добавить булку и начинку в конструктор', async ({ page }) => {
+      const constructorArea = page
+        .locator('section')
+        .filter({ hasText: 'Оформить заказ' });
 
-    // Проверяем что булка появилась сверху и снизу
-    await expect(page.getByText('(верх)')).toBeVisible();
-    await expect(page.getByText('(низ)')).toBeVisible();
+      // Проверяем до клика что ингредиентов в конструкторе нет
+      await expect(constructorArea.getByText('Краторная булка N-200i')).toBeHidden();
+      await expect(
+        constructorArea.getByText('Говяжий метеорит (отбивная)')
+      ).toBeHidden();
 
-    // Делаем скрин наличия булок (закомментировал)
-    // await page.screenshot({ path: 'tests/test-screen-bun.png' });
+      const bunCard = page.locator('li').filter({ hasText: 'Краторная булка N-200i' });
+      await bunCard.getByRole('button', { name: 'Добавить' }).click();
 
-    // Добавляем начинку и кликаем добавить
-    const mainCard = page
-      .locator('li')
-      .filter({ hasText: 'Говяжий метеорит (отбивная)' });
-    await mainCard.getByRole('button', { name: 'Добавить' }).click();
+      await expect(
+        constructorArea.getByText('Краторная булка N-200i (верх)')
+      ).toBeVisible();
+      await expect(
+        constructorArea.getByText('Краторная булка N-200i (низ)')
+      ).toBeVisible();
 
-    // Проверяем что начинка добавилась
-    await expect(page.getByText('Выберите начинку')).toBeHidden();
+      const mainCard = page
+        .locator('li')
+        .filter({ hasText: 'Говяжий метеорит (отбивная)' });
+      await mainCard.getByRole('button', { name: 'Добавить' }).click();
 
-    // Делаем скрин наличия начинки (закомментировал)
-    // await page.screenshot({ path: 'tests/test-screen-main.png' });
+      await expect(
+        constructorArea.getByText('Говяжий метеорит (отбивная)')
+      ).toBeVisible();
+    });
   });
 
-  test('Работа модальных окон ингредиента', async ({ page }) => {
-    // Открываем модалку кликом по картинке
-    const bunCard = page
-      .locator('li')
-      .filter({ hasText: 'Говяжий метеорит (отбивная)' });
-    const modal = page.locator('#modals');
+  test.describe('Работа модальных окон ингредиента', () => {
+    test('Должен открывать и закрывать модалку по крестику и оверлею, проверять ее отсутствие и наличие нужного ингредиента ', async ({
+      page,
+    }) => {
+      const bunCard = page.locator('li').filter({ hasText: 'Краторная булка N-200i' });
+      const modal = page.locator('#modals');
+      const modalHeading = modal.getByRole('heading', { name: 'Детали ингредиента' });
 
-    // Открываем модалку, проверяем что она открылась и проверяем что в модалке отображается название нужного ингредиента
-    await bunCard.locator('a[href^="/ingredients/"]').click();
-    await expect(
-      modal.getByRole('heading', { name: 'Детали ингредиента' })
-    ).toBeVisible();
-    await expect(modal.getByText('Говяжий метеорит (отбивная)')).toBeVisible();
+      await expect(modalHeading).toBeHidden();
 
-    // Делаем скрин открытия модалки (закомментировал)
-    // await page.screenshot({ path: 'tests/test-screen-modal-open.png' });
+      await bunCard.locator('a[href^="/ingredients/"]').click();
+      await expect(modalHeading).toBeVisible();
+      await expect(modal.getByText('Краторная булка N-200i')).toBeVisible();
 
-    // Закрываем по крестику
-    await page.getByRole('button', { name: 'Закрыть' }).click();
-    await expect(
-      modal.getByRole('heading', { name: 'Детали ингредиента' })
-    ).toBeHidden();
+      await page.getByRole('button', { name: 'Закрыть' }).click();
+      await expect(modalHeading).toBeHidden();
 
-    // Делаем скрин закрытия модалки по крестику (закомментировал)
-    // await page.screenshot({ path: 'tests/test-screen-modal-close-smallcross.png' });
+      await bunCard.locator('a[href^="/ingredients/"]').click();
+      await expect(modalHeading).toBeVisible();
 
-    // Снова открываем и закрываем по оверлею
-    await bunCard.locator('a[href^="/ingredients/"]').click();
-    await expect(
-      modal.getByRole('heading', { name: 'Детали ингредиента' })
-    ).toBeVisible();
-
-    // Клик по оверлею слева сверху
-    await page.mouse.click(10, 10);
-    await expect(
-      modal.getByRole('heading', { name: 'Детали ингредиента' })
-    ).toBeHidden();
-
-    // Делаем скрин закрытия модалки по оверлею (закомментировал)
-    // await page.screenshot({ path: 'tests/test-screen-modal-close-overlay.png' });
+      await page.getByTestId('modal-overlay').click({ position: { x: 10, y: 10 } });
+      await expect(modalHeading).toBeHidden();
+    });
   });
 
-  test('Создание заказа', async ({ page }) => {
-    // Собираем бургер-мургер-крюгер
-    await page
-      .locator('li')
-      .filter({ hasText: 'Краторная булка N-200i' })
-      .getByRole('button', { name: 'Добавить' })
-      .click();
-    await page
-      .locator('li')
-      .filter({ hasText: 'Говяжий метеорит (отбивная)' })
-      .getByRole('button', { name: 'Добавить' })
-      .click();
+  test.describe('Создание заказа', () => {
+    test('Должен успешно имитировать создание заказа и очищать конструктор', async ({
+      page,
+    }) => {
+      const constructorArea = page
+        .locator('section')
+        .filter({ hasText: 'Оформить заказ' });
+      const orderModal = page.locator('#modals');
+      const orderHeading = orderModal.getByRole('heading', { name: '1186' });
 
-    // Кликаем по кнопке оформить заказ
-    await page.getByRole('button', { name: 'Оформить заказ' }).click();
+      await page
+        .locator('li')
+        .filter({ hasText: 'Краторная булка N-200i' })
+        .getByRole('button', { name: 'Добавить' })
+        .click();
+      await page
+        .locator('li')
+        .filter({ hasText: 'Говяжий метеорит (отбивная)' })
+        .getByRole('button', { name: 'Добавить' })
+        .click();
 
-    // Проверяем что модалка открылась и номер заказа верный
-    const orderModal = page.locator('#modals');
-    await expect(orderModal.getByRole('heading', { name: '1186' })).toBeVisible();
-    await expect(page.getByText('идентификатор заказа')).toBeVisible();
+      await expect(
+        constructorArea.getByText('Краторная булка N-200i (верх)')
+      ).toBeVisible();
+      await expect(
+        constructorArea.getByText('Говяжий метеорит (отбивная)')
+      ).toBeVisible();
+      await expect(
+        constructorArea.getByText('Краторная булка N-200i (низ)')
+      ).toBeVisible();
 
-    // Делаем скрин открытия модалки при оформлении заказа (закомментировал)
-    // await page.screenshot({ path: 'tests/test-screen-modal-order.png' });
+      await expect(orderHeading).toBeHidden();
 
-    // Проверяем что конструктор пуст
-    await expect(page.getByText('Выберите булки')).toHaveCount(2);
-    await expect(page.getByText('Выберите начинку')).toBeVisible();
+      await page.getByRole('button', { name: 'Оформить заказ' }).click();
 
-    // Закрываем модалку и проверяем успешность закрытия
-    await page.getByRole('button', { name: 'Закрыть' }).click();
-    await expect(orderModal.getByRole('heading', { name: '1186' })).toBeHidden();
+      await expect(orderHeading).toBeVisible();
+      await expect(page.getByText('идентификатор заказа')).toBeVisible();
+
+      await expect(constructorArea.getByText('Выберите булки')).toHaveCount(2);
+      await expect(constructorArea.getByText('Выберите начинку')).toBeVisible();
+
+      await page.getByRole('button', { name: 'Закрыть' }).click();
+      await expect(orderHeading).toBeHidden();
+    });
   });
 });

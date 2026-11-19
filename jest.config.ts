@@ -2,7 +2,7 @@ import type { Config } from 'jest';
 
 const config: Config = {
   preset: 'ts-jest',
-  testEnvironment: 'jsdom',
+  testEnvironment: 'node',
   roots: ['<rootDir>/src'],
   testMatch: ['**/*.test.ts'],
   moduleNameMapper: {
@@ -33,17 +33,16 @@ const config: Config = {
     '^@ui-pages$': '<rootDir>/src/components/ui/pages',
     '^@ui-pages/(.*)$': '<rootDir>/src/components/ui/pages/$1',
   },
-  collectCoverage: true,
   coverageDirectory: 'coverage',
-  collectCoverageFrom: [
-    'src/services/slices/**/*.{ts,tsx}',
-    '!src/**/*.test.{ts,tsx}',
-  ],
+  collectCoverageFrom: ['src/services/slices/**/*.{ts,tsx}', '!src/**/*.test.{ts,tsx}'],
   transform: {
-    '^.+\\.tsx?$': ['ts-jest', {
-      tsconfig: 'tsconfig.test.json',
-      diagnostics: false,
-    }],
+    '^.+\\.tsx?$': [
+      'ts-jest',
+      {
+        tsconfig: 'tsconfig.test.json',
+        diagnostics: false,
+      },
+    ],
   },
 };
 
