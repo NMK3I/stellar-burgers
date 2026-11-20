@@ -33,11 +33,16 @@ const config: Config = {
     '^@ui-pages$': '<rootDir>/src/components/ui/pages',
     '^@ui-pages/(.*)$': '<rootDir>/src/components/ui/pages/$1',
   },
+  coverageDirectory: 'coverage',
+  collectCoverageFrom: ['src/services/slices/**/*.{ts,tsx}', '!src/**/*.test.{ts,tsx}'],
   transform: {
-    '^.+\\.tsx?$': ['ts-jest', {
-      tsconfig: 'tsconfig.test.json',
-      diagnostics: false,
-    }],
+    '^.+\\.tsx?$': [
+      'ts-jest',
+      {
+        tsconfig: 'tsconfig.test.json',
+        diagnostics: false,
+      },
+    ],
   },
 };
 
